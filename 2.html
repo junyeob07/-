@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>네트워크관리사 2급 합격 마스터 (이론/필기/실기/오답노트)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background-color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* Terminal Effect */
+    .cli-terminal {
+      background-color: #0f172a;
+      color: #38bdf8;
+      font-family: 'Courier New', Courier, monospace;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('dashboard')">
+        <div class="bg-blue-600 p-2 rounded-lg text-white">
+          <i class="fa-solid fa-network-wired text-xl"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">네트워크관리사 2급 마스터</h1>
+          <p class="text-xs text-slate-400">이론 · 필기 · 실기 · 오답분석 통합 시스템</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Stats & Reset -->
+      <div class="flex items-center space-x-4">
+        <div class="hidden md:flex items-center space-x-4 text-xs bg-slate-800 py-1.5 px-3 rounded-full border border-slate-700">
+          <div><span class="text-slate-400">총 푼 문제:</span> <strong id="head-total-solved" class="text-blue-400">0</strong></div>
+          <div class="h-3 w-px bg-slate-700"></div>
+          <div><span class="text-slate-400">정답률:</span> <strong id="head-accuracy" class="text-emerald-400">0%</strong></div>
+          <div class="h-3 w-px bg-slate-700"></div>
+          <div><span class="text-slate-400">오답노트:</span> <strong id="head-wrong-count" class="text-amber-400">0건</strong></div>
+        </div>
+        <button onclick="confirmResetData()" title="학습 데이터 초기화" class="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition text-xs flex items-center gap-1">
+          <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">초기화</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER WITH NAVIGATION & CONTENT -->
+  <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="w-full md:w-64 flex-shrink-0">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sticky top-20">
+        <nav class="space-y-1" id="nav-tabs">
+          <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="nav-btn w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition">
+            <i class="fa-solid fa-chart-pie w-6 text-blue-600"></i> 대시보드 & 학습분석
+          </button>
+          <button onclick="switchTab('theory')" id="tab-btn-theory" class="nav-btn w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition">
+            <i class="fa-solid fa-book-open w-6 text-indigo-600"></i> 핵심 이론 요약
+          </button>
+          <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="nav-btn w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition">
+            <i class="fa-solid fa-pen-to-square w-6 text-emerald-600"></i> 필기 문제풀이
+          </button>
+          <button onclick="switchTab('practical')" id="tab-btn-practical" class="nav-btn w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition">
+            <i class="fa-solid fa-terminal w-6 text-purple-600"></i> 실기 시뮬레이션
+          </button>
+          <button onclick="switchTab('wrong')" id="tab-btn-wrong" class="nav-btn w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition relative">
+            <i class="fa-solid fa-bookmark w-6 text-amber-600"></i> 오답 노트 & 재검토
+            <span id="badge-wrong-count" class="ml-auto bg-amber-100 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+          </button>
+        </nav>
+
+        <hr class="my-4 border-slate-200">
+
+        <!-- QUICK MOCK EXAM BUTTON -->
+        <button onclick="startMockExam()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-sm hover:from-blue-700 hover:to-indigo-700 transition flex items-center justify-center gap-2 text-sm">
+          <i class="fa-solid fa-stopwatch"></i> 실전 모의고사 (50문항)
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 min-w-0">
+
+      <!-- ==================== TAB 1: DASHBOARD & STATS ==================== -->
+      <section id="tab-dashboard" class="tab-content space-y-6">
+        <!-- Banner -->
+        <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+          <div class="relative z-10">
+            <div class="inline-block bg-blue-500/30 backdrop-blur-md border border-blue-400/30 text-blue-200 text-xs px-3 py-1 rounded-full font-semibold mb-2">
+              합격 목표: 필기 60점 이상 / 실기 60점 이상
+            </div>
+            <h2 class="text-2xl font-bold mb-2">네트워크관리사 2급 합격 트레이닝</h2>
+            <p class="text-slate-300 text-sm max-w-2xl leading-relaxed">
+              최신 출제 경향을 반영한 이론 정리, 과목별 기출문제, 그리고 UTP 랜선 제작, 라우터 CLI, NOS 설정 시뮬레이터까지 단 하나의 플랫폼에서 완벽 대비하세요.
+            </p>
+          </div>
+          <i class="fa-solid fa-award text-9xl absolute -right-6 -bottom-8 opacity-10 text-white"></i>
+        </div>
+
+        <!-- Metric Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">누적 풀이 문항</p>
+
+              <h3 id="stat-total-solved" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+            </div>
+            <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl">
+              <i class="fa-solid fa-file-signature"></i>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">전체 정답률</p>
+              <h3 id="stat-accuracy-rate" class="text-2xl font-bold text-emerald-600 mt-1">0%</h3>
+            </div>
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+              <i class="fa-solid fa-bullseye"></i>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">복습 필요 (오답)</p>
+              <h3 id="stat-wrong-count" class="text-2xl font-bold text-amber-600 mt-1">0개</h3>
+            </div>
+            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center text-xl">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+          </div>
+
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">예상 합격 확률</p>
+              <h3 id="stat-pass-probability" class="text-2xl font-bold text-indigo-600 mt-1">진단중</h3>
+            </div>
+            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Radar Chart: Domain Competency -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-slate-900 text-sm mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-chart-radar text-blue-600"></i> 영역별 달성도 (%)
+            </h3>
+            <div class="h-64 relative">
+              <canvas id="domainRadarChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Line Chart: Recent Performance Trend -->
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-slate-900 text-sm mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-emerald-600"></i> 최근 학습 성적 추이
+            </h3>
+            <div class="h-64 relative">
+              <canvas id="performanceLineChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Practical Simulation Quick Launcher -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-screwdrivers-unscrewdriver text-purple-600"></i> 실기 필수 실습 모듈 바로가기
+            </h3>
+            <span class="text-xs text-slate-500">배점 비중: 약 100점 만점 / 60점 이상 합격</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div onclick="switchTab('practical'); openPracticalModule('utp');" class="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-blue-300 transition cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="text-blue-600 mb-2 font-bold text-sm flex items-center justify-between">
+                  <span>UTP 케이블 제작</span>
+                  <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">배점 6점</span>
+                </div>
+                <p class="text-xs text-slate-600">다이렉트 / 크로스 케이블 색상 순서 배열 (T568B/T568A)</p>
+              </div>
+              <div class="mt-4 text-xs text-blue-600 font-semibold flex items-center gap-1">
+                실습 시작하기 <i class="fa-solid fa-arrow-right"></i>
+              </div>
+            </div>
+
+            <div onclick="switchTab('practical'); openPracticalModule('cli');" class="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-purple-300 transition cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="text-purple-600 mb-2 font-bold text-sm flex items-center justify-between">
+                  <span>라우터 CLI 설정</span>
+                  <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">배점 ~15점</span>
+                </div>
+                <p class="text-xs text-slate-600">Cisco 라우터 기본 명령어 (IP, Interface, Enable Password, Copy run start)</p>
+              </div>
+              <div class="mt-4 text-xs text-purple-600 font-semibold flex items-center gap-1">
+                터미널 실습 <i class="fa-solid fa-arrow-right"></i>
+              </div>
+            </div>
+
+            <div onclick="switchTab('practical'); openPracticalModule('nos');" class="p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-emerald-300 transition cursor-pointer flex flex-col justify-between">
+              <div>
+                <div class="text-emerald-600 mb-2 font-bold text-sm flex items-center justify-between">
+                  <span>NOS 네트워크 설정</span>
+                  <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">배점 ~25점</span>
+                </div>
+                <p class="text-xs text-slate-600">Windows Server IP/Subnet/DNS 및 서비스(Web/FTP/DHCP) 설정 시뮬레이션</p>
+              </div>
+              <div class="mt-4 text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                설정창 시작 <i class="fa-solid fa-arrow-right"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 2: THEORY SUMMARY ==================== -->
+      <section id="tab-theory" class="tab-content hidden space-y-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">네트워크관리사 2급 핵심 이론 노트</h2>
+              <p class="text-xs text-slate-500 mt-1">필기 및 실기 기본 개념 시험에 자주 출제되는 핵심 주제 모음</p>
+            </div>
+            <!-- Subnet Calculator Button -->
+            <button onclick="openSubnetModal()" class="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center gap-2">
+              <i class="fa-solid fa-calculator"></i> 서브넷마스크 계산기 팝업
+            </button>
+          </div>
+
+          <!-- Theory Categories Accordion/Tabs -->
+          <div id="theory-accordion" class="space-y-4">
+            <!-- 1. OSI 7 Layer & TCP/IP -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <button onclick="toggleAccordion('theory-1')" class="w-full bg-slate-50 p-4 text-left font-bold text-slate-800 flex items-center justify-between hover:bg-slate-100 transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-blue-600"></i> OSI 7 계층 & TCP/IP 4 계층</span>
+                <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+              </button>
+              <div id="theory-1" class="p-4 border-t border-slate-200 bg-white space-y-3 text-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <h4 class="font-semibold text-blue-700 mb-1">OSI 7 계층 핵심 정리</h4>
+                    <ul class="text-xs text-slate-700 space-y-1">
+                      <li><strong>7. 응용 (Application):</strong> HTTP, FTP, SMTP, DNS, DHCP (데이터)</li>
+                      <li><strong>6. 표현 (Presentation):</strong> 암호화, 압축, JPEG, ASCII</li>
+                      <li><strong>5. 세션 (Session):</strong> 연결 유지, API, NetBIOS, SSH</li>
+                      <li><strong>4. 전송 (Transport):</strong> TCP(신뢰성, 3-Way Handshake), UDP(비연결성, 속도). PDU: 세그먼트</li>
+                      <li><strong>3. 네트워크 (Network):</strong> IP, ICMP, ARP/RARP, 라우팅. PDU: 패킷</li>
+                      <li><strong>2. 데이터링크 (Data Link):</strong> MAC 주소, 스위치, Ethernet, PPP. PDU: 프레임</li>
+                      <li><strong>1. 물리 (Physical):</strong> 리피터, 허브, 케이블, 비트(Bit)</li>
+                    </ul>
+                  </div>
+                  <div class="bg-indigo-50/50 p-3 rounded-lg border border-indigo-100">
+                    <h4 class="font-semibold text-indigo-700 mb-1">주요 프로토콜 포트 번호 (필기 필수)</h4>
+                    <div class="grid grid-cols-2 gap-2 text-xs text-slate-700">
+                      <div>• FTP: 20(데이터), 21(제어)</div>
+                      <div>• SSH: 22</div>
+                      <div>• Telnet: 23</div>
+                      <div>• SMTP: 25</div>
+                      <div>• DNS: 53</div>
+                      <div>• DHCP: 67/68</div>
+                      <div>• HTTP: 80</div>
+                      <div>• HTTPS: 443</div>
+                      <div>• SNMP: 161/162</div>
+                      <div>• POP3: 110</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Subnetting & IP Addressing -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <button onclick="toggleAccordion('theory-2')" class="w-full bg-slate-50 p-4 text-left font-bold text-slate-800 flex items-center justify-between hover:bg-slate-100 transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-network-wired text-emerald-600"></i> IP 주소 체계 및 서브넷팅 계산식</span>
+                <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+              </button>
+              <div id="theory-2" class="p-4 border-t border-slate-200 bg-white space-y-3 text-sm hidden">
+                <div class="space-y-2 text-xs text-slate-700">
+                  <p><strong>• IPv4 클래스 구분:</strong></p>
+                  <ul class="list-disc pl-5 space-y-1">
+                    <li>Class A: 1.0.0.0 ~ 127.255.255.255 (기본 서브넷: 255.0.0.0 / CIDR: /8)</li>
+                    <li>Class B: 128.0.0.0 ~ 191.255.255.255 (기본 서브넷: 255.255.0.0 / CIDR: /16)</li>
+                    <li>Class C: 192.0.0.0 ~ 223.255.255.255 (기본 서브넷: 255.255.255.0 / CIDR: /24)</li>
+                  </ul>
+                  <p class="pt-2"><strong>• 사설 IP 대역 (Private IP):</strong></p>
+                  <ul class="list-disc pl-5 space-y-1">
+                    <li>Class A: 10.0.0.0 ~ 10.255.255.255</li>
+                    <li>Class B: 172.16.0.0 ~ 172.31.255.255</li>
+                    <li>Class C: 192.168.0.0 ~ 192.168.255.255</li>
+                  </ul>
+                  <div class="mt-3 bg-amber-50 p-3 rounded border border-amber-200 text-amber-900">
+                    <strong>★ 서브넷 계산 꿀팁:</strong>
+                    사용 가능한 호스트 수 = 2<sup>(32 - CIDR)</sup> - 2 (네트워크 주소 및 브로드캐스트 주소 제외).<br>
+                    예) /26 인 경우 서브넷 마스크 = 255.255.255.192, 블록 크기 = 64, 호스트 수 = 62개.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Network Devices & Security -->
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+              <button onclick="toggleAccordion('theory-3')" class="w-full bg-slate-50 p-4 text-left font-bold text-slate-800 flex items-center justify-between hover:bg-slate-100 transition">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-purple-600"></i> 네트워크 장비, NOS 및 정보보안</span>
+                <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+              </button>
+              <div id="theory-3" class="p-4 border-t border-slate-200 bg-white space-y-3 text-sm hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <h5 class="font-bold text-purple-700 mb-1">핵심 장비 구분</h5>
+                    <p class="mb-1"><strong>• L2 스위치:</strong> MAC 주소 테이블 기반, VLAN 지원</p>
+                    <p class="mb-1"><strong>• L3 스위치:</strong> IP 라우팅 기능 포함 스위치</p>
+                    <p class="mb-1"><strong>• 라우터:</strong> 서로 다른 네트워크 연결, 최적 경로 설정 (RIP, OSPF)</p>
+                  </div>
+                  <div>
+                    <h5 class="font-bold text-purple-700 mb-1">네트워크 보안 용어</h5>
+                    <p class="mb-1"><strong>• Spoofing:</strong> IP/MAC/DNS 등을 속여 정상 사용자로 위장</p>
+                    <p class="mb-1"><strong>• Sniffing:</strong> 네트워크 패킷을 몰래 도청/탈취</p>
+                    <p class="mb-1"><strong>• DoS / DDoS:</strong> 대량의 요청으로 서비스 거부 상태 유발 (SYN Flooding 등)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== TAB 3: WRITTEN QUIZ ==================== -->
+      <section id="tab-quiz" class="tab-content hidden space-y-6">
+        <!-- Filter Header -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">필기 문제풀이</h2>
+            <p class="text-xs text-slate-500 mt-0.5">과목별 문제풀이 및 정답 즉시 확인</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="quiz-category-select" onchange="filterQuizCategory()" class="bg-slate-50 border border-slate-300 text-slate-800 text-xs rounded-lg px-3 py-2 font-medium focus:ring-2 focus:ring-blue-500">
+              <option value="ALL">전체 과목 (모든 문항)</option>
+              <option value="네트워크 일반">1과목: 네트워크 일반</option>
+              <option value="NOS (운영체제)">2과목: NOS (Windows/Linux)</option>
+              <option value="근거리 통신망">3과목: 근거리 통신망 및 장비</option>
+              <option value="정보보안">4과목: 정보보안 일반</option>
+            </select>
+
+            <button onclick="resetQuizProgress()" class="bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-semibold px-3 py-2 rounded-lg transition">
+              <i class="fa-solid fa-arrows-rotate"></i> 초기화
+            </button>
+          </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container" class="space-y-4">
+          <!-- Dynamically populated quiz cards -->
+        </div>
+      </section>
+
+      <!-- ==================== TAB 4: PRACTICAL SIMULATION ==================== -->
+      <section id="tab-practical" class="tab-content hidden space-y-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">실기 작업형 시뮬레이터</h2>
+              <p class="text-xs text-slate-500 mt-0.5">실제 실기 시험과 동일한 UTP 제작, CLI 명령어, NOS 설정 환경</p>
+            </div>
+            <!-- Sub-tab Selector -->
+            <div class="flex space-x-1 bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+              <button onclick="openPracticalModule('utp')" id="prac-tab-utp" class="px-3 py-1.5 rounded-md bg-white shadow-sm text-slate-900 transition">UTP 케이블</button>
+              <button onclick="openPracticalModule('cli')" id="prac-tab-cli" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">라우터 CLI</button>
+              <button onclick="openPracticalModule('nos')" id="prac-tab-nos" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">NOS TCP/IP</button>
+            </div>
+          </div>
+
+          <!-- SUB MODULE 1: UTP CABLE WIRING -->
+          <div id="prac-module-utp" class="space-y-6">
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 flex items-start gap-2">
+              <i class="fa-solid fa-circle-info text-amber-600 mt-0.5"></i>
+              <div>
+                <strong>문제 조건:</strong> <span id="utp-question-text">Direct Cable (T568B) 배열을 완성하시오. (서로 다른 계층 장비 연결용)</span><br>
+                아래 8개의 색상 핀을 올바른 핀 번호(1~8번) 순서대로 드래그/클릭하여 정렬하세요.
+              </div>
+            </div>
+
+            <!-- Wire Slots 1 to 8 -->
+            <div>
+              <p class="text-xs font-bold text-slate-700 mb-2">RJ-45 플러그 핀 번호 (1번 ~ 8번):</p>
+              <div id="utp-slots" class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                <!-- 8 slots dynamically generated -->
+              </div>
+            </div>
+
+            <!-- Color Palette Options -->
+            <div>
+              <p class="text-xs font-bold text-slate-700 mb-2">사용 가능한 케이블 선 선택 (클릭 시 선택된 빈 슬롯에 삽입):</p>
+              <div id="utp-palette" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <!-- 8 color wires -->
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+              <button onclick="toggleUtpStandard()" class="text-xs text-indigo-600 font-medium underline">
+                <i class="fa-solid fa-right-left"></i> 문제 유형 변경 (Direct T568B / Cross T568A)
+              </button>
+              <div class="flex gap-2">
+                <button onclick="resetUtpSlots()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">다시 하기</button>
+                <button onclick="gradeUtpCable()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">채점 하기</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SUB MODULE 2: ROUTER CLI TERMINAL -->
+          <div id="prac-module-cli" class="hidden space-y-4">
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs text-purple-900">
+              <strong>문제:</strong> Router1의 FastEthernet 0/0 인터페이스에 IP 주소 <code>192.168.10.1 / 255.255.255.0</code>을 설정하고 활성화(no shutdown) 후 저장(copy run start) 하시오.
+            </div>
+
+            <!-- Interactive CLI Box -->
+            <div class="cli-terminal rounded-xl p-4 shadow-inner text-xs min-h-[300px] flex flex-col justify-between">
+              <div id="cli-output-log" class="space-y-1 overflow-y-auto max-h-[260px] custom-scrollbar mb-2 font-mono">
+                <p class="text-slate-400">Router1&gt; (Type 'enable' or '?' for help)</p>
+              </div>
+              <form onsubmit="handleCliSubmit(event)" class="flex items-center gap-2 border-t border-slate-800 pt-2">
+                <span id="cli-prompt" class="font-bold text-emerald-400 select-none">Router1&gt;</span>
+                <input type="text" id="cli-input" class="bg-transparent border-none text-white focus:outline-none w-full font-mono text-xs" placeholder="명령어를 입력하세요..." autocomplete="off">
+              </form>
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <div>지원 명령어: <code>enable</code>, <code>configure terminal</code>, <code>interface fastethernet 0/0</code>, <code>ip address ...</code>, <code>no shutdown</code>, <code>exit</code>, <code>copy run start</code></div>
+              <button onclick="gradeCliTerminal()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">채점 하기</button>
+            </div>
+          </div>
+
+          <!-- SUB MODULE 3: NOS WINDOWS SERVER TCP/IP CONFIG -->
+          <div id="prac-module-nos" class="hidden space-y-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900">
+              <strong>문제:</strong> Windows Server의 네트워크 속성에서 아래 지정된 IP 주소 정보를 설정하시오.<br>
+              • IP 주소: <strong>192.168.1.100</strong> | • 서브넷 마스크: <strong>255.255.255.0</strong> | • 기본 게이트웨이: <strong>192.168.1.1</strong><br>
+              • 기본 설정 DNS 서버: <strong>168.126.63.1</strong> | • 보조 DNS 서버: <strong>8.8.8.8</strong>
+            </div>
+
+            <!-- Simulated Windows GUI Dialog -->
+            <div class="max-w-md mx-auto bg-slate-100 border-2 border-slate-300 rounded-lg shadow-lg overflow-hidden text-xs">
+              <div class="bg-slate-800 text-white px-3 py-1.5 flex items-center justify-between font-bold">
+                <span>Internet Protocol Version 4 (TCP/IPv4) 속성</span>
+                <i class="fa-solid fa-xmark cursor-pointer"></i>
+              </div>
+              <div class="p-4 space-y-4 bg-slate-50">
+                <div class="space-y-2 border-b border-slate-200 pb-3">
+                  <label class="flex items-center gap-2 font-medium">
+                    <input type="radio" name="ip-mode" value="static" checked> 다음 IP 주소 사용(S):
+                  </label>
+                  <div class="pl-6 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span>IP 주소(I):</span>
+                      <input type="text" id="nos-ip" class="w-40 border border-slate-300 rounded px-2 py-1 text-right font-mono" placeholder="192.168.1.100">
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span>서브넷 마스크(U):</span>
+                      <input type="text" id="nos-subnet" class="w-40 border border-slate-300 rounded px-2 py-1 text-right font-mono" placeholder="255.255.255.0">
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span>기본 게이트웨이(D):</span>
+                      <input type="text" id="nos-gateway" class="w-40 border border-slate-300 rounded px-2 py-1 text-right font-mono" placeholder="192.168.1.1">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="flex items-center gap-2 font-medium">
+                    <input type="radio" name="dns-mode" value="static" checked> 다음 DNS 서버 주소 사용(B):
+                  </label>
+                  <div class="pl-6 space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span>기본 설정 DNS 서버(P):</span>
+                      <input type="text" id="nos-dns1" class="w-40 border border-slate-300 rounded px-2 py-1 text-right font-mono" placeholder="168.126.63.1">
+                    </div>
+                    <div class="flex items-center justify-between">
+                      <span>보조 DNS 서버(A):</span>
+                      <input type="text" id="nos-dns2" class="w-40 border border-slate-300 rounded px-2 py-1 text-right font-mono" placeholder="8.8.8.8">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                  <button onclick="gradeNosConfig()" class="px-4 py-1.5 bg-blue-600 text-white font-bold rounded shadow hover:bg-blue-700">확인(OK)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== TAB 5: WRONG ANSWERS ==================== -->
+      <section id="tab-wrong" class="tab-content hidden space-y-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">오답 노트 & 집중 복습</h2>
+            <p class="text-xs text-slate-500 mt-0.5">틀린 문제를 다시 풀고 정답 시 목록에서 자동 제거됩니다.</p>
+          </div>
+          <button onclick="clearAllWrongAnswers()" class="text-xs text-red-600 hover:text-red-700 font-semibold border border-red-200 bg-red-50 px-3 py-1.5 rounded-lg transition">
+            <i class="fa-solid fa-trash"></i> 전체 삭제
+          </button>
+        </div>
+
+        <div id="wrong-container" class="space-y-4">
+          <!-- Dynamically populated wrong questions -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: SUBNET CALCULATOR -->
+  <div id="subnet-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4 relative">
+      <button onclick="closeSubnetModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+        <i class="fa-solid fa-calculator text-indigo-600"></i> 서브넷 마스크 계산기
+      </h3>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">IP 주소 및 CIDR 서브넷:</label>
+          <div class="flex gap-2">
+            <input type="text" id="sub-ip" value="192.168.10.0" class="flex-1 border border-slate-300 rounded-lg px-3 py-2">
+            <select id="sub-cidr" class="border border-slate-300 rounded-lg px-3 py-2 font-bold">
+              <option value="24">/24 (255.255.255.0)</option>
+              <option value="25">/25 (255.255.255.128)</option>
+              <option value="26">/26 (255.255.255.192)</option>
+              <option value="27">/27 (255.255.255.224)</option>
+              <option value="28">/28 (255.255.255.240)</option>
+              <option value="29">/29 (255.255.255.248)</option>
+              <option value="30">/30 (255.255.255.252)</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="calculateSubnet()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition">계산하기</button>
+
+        <div id="sub-result" class="bg-slate-50 border border-slate-200 p-3 rounded-lg space-y-1.5 hidden">
+          <div>• 서브넷 마스크: <strong id="res-mask" class="text-indigo-600"></strong></div>
+          <div>• 네트워크 주소: <strong id="res-net"></strong></div>
+          <div>• 브로드캐스트 주소: <strong id="res-broad"></strong></div>
+          <div>• 사용 가능 호스트 개수: <strong id="res-hosts" class="text-emerald-600"></strong>개</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    /* ==========================================================================
+       1. DATA BANK (Exam Questions & Practical Labs)
+       ========================================================================== */
+    const QUESTION_BANK = [
+      {
+        id: 101,
+        category: "네트워크 일반",
+        question: "OSI 7 계층 모델 중 송수신 양단 간의 신뢰성 있는 전송을 보장하고, 흐름 제어(Flow Control) 및 오류 제어를 수행하는 계층은?",
+        options: ["1. 네트워크 계층", "2. 전송 계층", "3. 데이터링크 계층", "4. 표현 계층"],
+        answer: 1, // 0-indexed: 2. 전송 계층
+        explanation: "전송 계층(Transport Layer, 4계층)은 TCP 프로토콜을 통해 흐름제어, 혼잡제어, 신뢰성 있는 종단간 데이터 전송을 담당합니다."
+      },
+      {
+        id: 102,
+        category: "네트워크 일반",
+        question: "IP 주소가 192.168.1.0/26 인 서브넷에서 할당 가능한 유효 호스트(Host) 개수는 몇 개인가?",
+        options: ["1. 30개", "2. 62개", "3. 64개", "4. 126개"],
+        answer: 1,
+        explanation: "/26은 32-26 = 6비트가 호스트 비트입니다. 2^6 = 64개 중 네트워크 주소와 브로드캐스트 주소 2개를 제외하면 62개가 유효 호스트입니다."
+      },
+      {
+        id: 103,
+        category: "NOS (운영체제)",
+        question: "Windows Server 환경에서 클라이언트 컴퓨터에게 IP 주소, 서브넷 마스크, 게이트웨이 등의 정보를 자동으로 할당해주는 서비스는?",
+        options: ["1. DNS", "2. IIS", "3. DHCP", "4. SNMP"],
+        answer: 2,
+        explanation: "DHCP(Dynamic Host Configuration Protocol)는 동적 IP 주소 자동 할당 프로토콜입니다."
+      },
+      {
+        id: 104,
+        category: "근거리 통신망",
+        question: "Ethernet LAN 표준 규칙 중 매체 접근 제어(MAC) 방식으로, 전송 매체 충돌을 감지(Collision Detection)하는 기술은?",
+        options: ["1. CSMA/CD", "2. CSMA/CA", "3. Token Ring", "4. Slotted ALOHA"],
+        answer: 0,
+        explanation: "유선 이더넷 환경에서는 CSMA/CD 방식을 사용하고, 무선 LAN(Wi-Fi)에서는 CSMA/CA 방식을 사용합니다."
+      },
+      {
+        id: 105,
+        category: "정보보안",
+        question: "TCP 3-Way Handshake 과정에서 정상적인 ACK 패킷을 보내지 않고 대량의 SYN 패킷만 연속적으로 보내 서버의 연결 자원을 고갈시키는 공격은?",
+        options: ["1. IP Spoofing", "2. SYN Flooding", "3. Smurf Attack", "4. Buffer Overflow"],
+        answer: 1,
+        explanation: "SYN Flooding은 서버의 Half-Open 연결 큐를 가득 차게 만들어 정당한 사용자의 접속을 거부시키는 대표적 DoS 공격입니다."
+      },
+      {
+        id: 106,
+        category: "네트워크 일반",
+        question: "다음 중 비연결형(Connectionless) 프로토콜로 신뢰성보다는 신속한 데이터 전송이 우선시되는 프로토콜은?",
+        options: ["1. TCP", "2. UDP", "3. FTP", "4. SSH"],
+        answer: 1,
+        explanation: "UDP(User Datagram Protocol)는 헤더가 가볍고 오버헤드가 적어 스트리밍이나 VoIP, DNS 등 빠른 전송이 필요한 서비스에 사용됩니다."
+      },
+      {
+        id: 107,
+        category: "NOS (운영체제)",
+        question: "Linux 명령어 중 파일이나 디렉토리의 접근 권한(Permission)을 변경할 때 사용하는 명령어는?",
+        options: ["1. chown", "2. chmod", "3. chgrp", "4. umask"],
+        answer: 1,
+        explanation: "chmod(change mode)는 파일이나 디렉토리의 읽기(r), 쓰기(w), 실행(x) 권한을 변경합니다. 소유자 변경은 chown입니다."
+      },
+      {
+        id: 108,
+        category: "정보보안",
+        question: "송신자의 MAC 주소를 공격자의 MAC 주소로 속여 네트워크 트래픽을 도청하는 공격 기법은?",
+        options: ["1. ARP Spoofing", "2. DNS Spoofing", "3. Phishing", "4. Ransomware"],
+        answer: 0,
+        explanation: "ARP Spoofing은 ARP 캐시 테이블을 위조하여 패킷 흐름을 공격자의 PC로 우회시키는 공격 기법입니다."
+      }
+    ];
+
+    /* UTP Wiring Color Standards */
+    // T568B (Direct Cable): White-Orange, Orange, White-Green, Blue, White-Blue, Green, White-Brown, Brown
+    const UTP_T568B = ["주띠", "주황", "초띠", "파랑", "파띠", "초록", "갈띠", "갈색"];
+    // T568A (Cross Cable Side): White-Green, Green, White-Orange, Blue, White-Blue, Orange, White-Brown, Brown
+    const UTP_T568A = ["초띠", "초록", "주띠", "파랑", "파띠", "주황", "갈띠", "갈색"];
+
+    /* ==========================================================================
+       2. STATE MANAGEMENT & LOCAL STORAGE
+       ========================================================================== */
+    let appState = {
+      userAnswers: {},  // { qId: optionIndex }
+      wrongAnswers: [], // [ qId, ... ]
+      attemptsHistory: [], // [ { date, score, total }, ... ]
+      utpMode: 'T568B',
+      utpUserSlots: Array(8).fill(null),
+      cliCurrentMode: 'user', // user, enable, config, config-if
+      cliConfigured: { ip: false, mask: false, noShut: false, saved: false }
+    };
+
+    function loadState() {
+      const saved = localStorage.getItem('net_master_state_v1');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          appState = { ...appState, ...parsed };
+        } catch(e) { console.error("Failed to parse state", e); }
+      }
+      updateGlobalStatsUI();
+    }
+
+    function saveState() {
+      localStorage.setItem('net_master_state_v1', JSON.stringify(appState));
+      updateGlobalStatsUI();
+    }
+
+    function confirmResetData() {
+      if (confirm("모든 학습 데이터, 풀이 기록 및 오답 노트가 초기화됩니다. 계속하시겠습니까?")) {
+        localStorage.removeItem('net_master_state_v1');
+        appState = {
+          userAnswers: {},
+          wrongAnswers: [],
+          attemptsHistory: [],
+          utpMode: 'T568B',
+          utpUserSlots: Array(8).fill(null),
+          cliCurrentMode: 'user',
+          cliConfigured: { ip: false, mask: false, noShut: false, saved: false }
+        };
+        saveState();
+        renderQuizList();
+        renderWrongList();
+        renderCharts();
+        alert("데이터가 성공적으로 초기화되었습니다.");
+      }
+    }
+
+    /* ==========================================================================
+       3. NAVIGATION & UI SWITCHING
+       ========================================================================== */
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      // Update Nav Button Styles
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-50', 'text-blue-600', 'font-bold');
+        btn.classList.add('text-slate-700');
+      });
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-blue-50', 'text-blue-600', 'font-bold');
+      }
+
+      if (tabId === 'dashboard') renderCharts();
+      if (tabId === 'quiz') renderQuizList();
+      if (tabId === 'wrong') renderWrongList();
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('hidden');
+    }
+
+    /* ==========================================================================
+       4. GLOBAL STATS & CHARTS
+       ========================================================================== */
+    let radarChartInstance = null;
+    let lineChartInstance = null;
+
+    function updateGlobalStatsUI() {
+      const totalSolved = Object.keys(appState.userAnswers).length;
+      let correctCount = 0;
+
+      Object.entries(appState.userAnswers).forEach(([qId, ansIdx]) => {
+        const q = QUESTION_BANK.find(item => item.id == qId);
+        if (q && q.answer === ansIdx) correctCount++;
+      });
+
+      const accuracy = totalSolved > 0 ? Math.round((correctCount / totalSolved) * 100) : 0;
+      const wrongCount = appState.wrongAnswers.length;
+
+      // Update Top Header
+      document.getElementById('head-total-solved').innerText = totalSolved;
+      document.getElementById('head-accuracy').innerText = `${accuracy}%`;
+      document.getElementById('head-wrong-count').innerText = `${wrongCount}건`;
+      document.getElementById('badge-wrong-count').innerText = wrongCount;
+
+      // Update Dashboard Cards
+      document.getElementById('stat-total-solved').innerText = `${totalSolved} / ${QUESTION_BANK.length}`;
+      document.getElementById('stat-accuracy-rate').innerText = `${accuracy}%`;
+      document.getElementById('stat-wrong-count').innerText = `${wrongCount}개`;
+
+      let prob = "진단중";
+      if (totalSolved >= 3) {
+        if (accuracy >= 80) prob = "매우 높음 (A)";
+        else if (accuracy >= 60) prob = "합격 가능 (B)";
+        else prob = "보강 필요 (C)";
+      }
+      document.getElementById('stat-pass-probability').innerText = prob;
+    }
+
+    function renderCharts() {
+      // 1. Domain Radar Chart
+      const domains = ["네트워크 일반", "NOS (운영체제)", "근거리 통신망", "정보보안"];
+      const domainStats = domains.map(domain => {
+        const domainQuestions = QUESTION_BANK.filter(q => q.category === domain);
+        let solved = 0, correct = 0;
+        domainQuestions.forEach(q => {
+          if (appState.userAnswers[q.id] !== undefined) {
+            solved++;
+            if (appState.userAnswers[q.id] === q.answer) correct++;
+          }
+        });
+        return solved > 0 ? Math.round((correct / solved) * 100) : 0;
+      });
+
+      const radarCtx = document.getElementById('domainRadarChart')?.getContext('2d');
+      if (radarCtx) {
+        if (radarChartInstance) radarChartInstance.destroy();
+        radarChartInstance = new Chart(radarCtx, {
+          type: 'radar',
+          data: {
+            labels: domains,
+            datasets: [{
+              label: '영역별 정답률 (%)',
+              data: domainStats,
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              borderColor: '#3b82f6',
+              pointBackgroundColor: '#2563eb'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: { min: 0, max: 100, ticks: { stepSize: 20 } }
+            }
+          }
+        });
+      }
+
+      // 2. Line Performance Chart
+      const lineCtx = document.getElementById('performanceLineChart')?.getContext('2d');
+      if (lineCtx) {
+        const historyData = appState.attemptsHistory.slice(-7); // last 7 attempts
+        const labels = historyData.length > 0 ? historyData.map((_, i) => `${i + 1}회차`) : ['1회차'];
+        const scores = historyData.length > 0 ? historyData.map(h => Math.round((h.score / h.total) * 100)) : [0];
+
+        if (lineChartInstance) lineChartInstance.destroy();
+        lineChartInstance = new Chart(lineCtx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '모의고사 점수 추이',
+              data: scores,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              fill: true,
+              tension: 0.3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { min: 0, max: 100 }
+            }
+          }
+        });
+      }
+    }
+
+    /* ==========================================================================
+       5. WRITTEN QUIZ SYSTEM
+       ========================================================================== */
+    function renderQuizList() {
+      const container = document.getElementById('quiz-container');
+      const selectedCategory = document.getElementById('quiz-category-select').value;
+
+      let filtered = QUESTION_BANK;
+      if (selectedCategory !== 'ALL') {
+        filtered = QUESTION_BANK.filter(q => q.category === selectedCategory);
+      }
+
+      container.innerHTML = filtered.map(q => {
+        const userAns = appState.userAnswers[q.id];
+        const isAnswered = userAns !== undefined;
+        const isCorrect = isAnswered && userAns === q.answer;
+
+        return `
+          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            <div class="flex items-start justify-between gap-2">
+              <span class="inline-block text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-700">${q.category}</span>
+              ${isAnswered ? (isCorrect ? '<span class="text-emerald-600 font-bold text-xs"><i class="fa-solid fa-circle-check"></i> 정답</span>' : '<span class="text-red-500 font-bold text-xs"><i class="fa-solid fa-circle-xmark"></i> 오답</span>') : ''}
+            </div>
+
+            <p class="font-bold text-slate-900 text-sm leading-relaxed">${q.question}</p>
+
+            <div class="space-y-2">
+              ${q.options.map((opt, idx) => {
+                let btnStyle = "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100";
+                if (isAnswered) {
+                  if (idx === q.answer) btnStyle = "bg-emerald-50 border-emerald-400 text-emerald-900 font-bold";
+                  else if (idx === userAns) btnStyle = "bg-red-50 border-red-300 text-red-800";
+                }
+                return `
+                  <button onclick="handleOptionSelect(${q.id}, ${idx})" ${isAnswered ? 'disabled' : ''} class="w-full text-left p-3 text-xs rounded-lg border ${btnStyle} transition flex items-center justify-between">
+                    <span>${opt}</span>
+                    ${isAnswered && idx === q.answer ? '<i class="fa-solid fa-check text-emerald-600"></i>' : ''}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+
+            ${isAnswered ? `
+              <div class="bg-blue-50/70 border border-blue-200 p-3 rounded-lg text-xs text-slate-700 leading-relaxed mt-2">
+                <strong class="text-blue-700"><i class="fa-solid fa-lightbulb"></i> 해설:</strong> ${q.explanation}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterQuizCategory() {
+      renderQuizList();
+    }
+
+    function handleOptionSelect(qId, selectedIdx) {
+      const q = QUESTION_BANK.find(item => item.id === qId);
+      if (!q) return;
+
+      appState.userAnswers[qId] = selectedIdx;
+
+      // Check if wrong
+      if (selectedIdx !== q.answer) {
+        if (!appState.wrongAnswers.includes(qId)) {
+          appState.wrongAnswers.push(qId);
+        }
+      } else {
+        // If answered correctly, remove from wrong list if existed
+        appState.wrongAnswers = appState.wrongAnswers.filter(id => id !== qId);
+      }
+
+      saveState();
+      renderQuizList();
+    }
+
+    function resetQuizProgress() {
+      if (confirm("필기 풀이 기록을 초기화하시겠습니까?")) {
+        appState.userAnswers = {};
+        saveState();
+        renderQuizList();
+      }
+    }
+
+    /* ==========================================================================
+       6. WRONG ANSWER NOTEBOOK
+       ========================================================================== */
+    function renderWrongList() {
+      const container = document.getElementById('wrong-container');
+      const wrongQuestions = QUESTION_BANK.filter(q => appState.wrongAnswers.includes(q.id));
+
+      if (wrongQuestions.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-500 text-xs">
+            <i class="fa-solid fa-circle-check text-4xl text-emerald-500 mb-2"></i>
+            <p class="font-bold text-slate-800 text-sm">오답 노트가 비어있습니다!</p>
+            <p class="mt-1">문제 풀이 중 틀린 문항이 여기에 자동으로 기록됩니다.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = wrongQuestions.map(q => `
+        <div class="bg-white p-5 rounded-xl border border-amber-200 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">${q.category}</span>
+            <button onclick="removeWrongItem(${q.id})" class="text-xs text-slate-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i> 삭제</button>
+          </div>
+          <p class="font-bold text-slate-900 text-sm">${q.question}</p>
+          <div class="space-y-1.5">
+            ${q.options.map((opt, idx) => `
+              <button onclick="retestWrongItem(${q.id}, ${idx})" class="w-full text-left p-2.5 text-xs rounded-lg border ${idx === q.answer ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200'}">
+                ${opt}
+              </button>
+            `).join('')}
+          </div>
+          <div class="bg-amber-50 p-3 rounded-lg text-xs text-amber-900 leading-relaxed">
+            <strong>정답 해설:</strong> ${q.explanation}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function retestWrongItem(qId, selectedIdx) {
+      const q = QUESTION_BANK.find(item => item.id === qId);
+      if (selectedIdx === q.answer) {
+        alert("정답입니다! 오답 노트에서 제거되었습니다.");
+        appState.wrongAnswers = appState.wrongAnswers.filter(id => id !== qId);
+        appState.userAnswers[qId] = selectedIdx;
+        saveState();
+        renderWrongList();
+      } else {
+        alert("아쉽습니다. 다시 도전해보세요!");
+      }
+    }
+
+    function removeWrongItem(qId) {
+      appState.wrongAnswers = appState.wrongAnswers.filter(id => id !== qId);
+      saveState();
+      renderWrongList();
+    }
+
+    function clearAllWrongAnswers() {
+      if (confirm("오답 노트를 전체 비우시겠습니까?")) {
+        appState.wrongAnswers = [];
+        saveState();
+        renderWrongList();
+      }
+    }
+
+    /* ==========================================================================
+       7. PRACTICAL SIMULATION: UTP CABLE LAB
+       ========================================================================== */
+    const UTP_PALETTE_COLORS = [
+      { name: "주띠", class: "bg-amber-100 border-amber-500 text-amber-800" },
+      { name: "주황", class: "bg-amber-500 text-white" },
+      { name: "초띠", class: "bg-emerald-100 border-emerald-500 text-emerald-800" },
+      { name: "파랑", class: "bg-blue-600 text-white" },
+      { name: "파띠", class: "bg-blue-100 border-blue-500 text-blue-800" },
+      { name: "초록", class: "bg-emerald-600 text-white" },
+      { name: "갈띠", class: "bg-stone-200 border-stone-500 text-stone-800" },
+      { name: "갈색", class: "bg-amber-900 text-white" }
+    ];
+
+    let selectedWireColor = null;
+
+    function initUtpLab() {
+      renderUtpSlots();
+      renderUtpPalette();
+    }
+
+    function renderUtpSlots() {
+      const slotsContainer = document.getElementById('utp-slots');
+      slotsContainer.innerHTML = appState.utpUserSlots.map((colorName, idx) => `
+        <div onclick="fillUtpSlot(${idx})" class="h-16 rounded-lg border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-1 cursor-pointer hover:border-blue-400 transition bg-white relative">
+          <span class="text-[10px] text-slate-400 font-bold absolute top-1 left-1">${idx + 1}</span>
+          ${colorName ? `
+            <span class="text-xs font-bold px-2 py-1 rounded ${getUtpColorClass(colorName)}">${colorName}</span>
+          ` : '<span class="text-xs text-slate-300">비어있음</span>'}
+        </div>
+      `).join('');
+    }
+
+    function renderUtpPalette() {
+      const paletteContainer = document.getElementById('utp-palette');
+      paletteContainer.innerHTML = UTP_PALETTE_COLORS.map(c => `
+        <button onclick="selectUtpColor('${c.name}')" class="p-2.5 rounded-lg font-bold text-xs transition border flex items-center justify-center gap-2 ${c.class} ${selectedWireColor === c.name ? 'ring-2 ring-indigo-500 scale-95' : ''}">
+          ${c.name}
+        </button>
+      `).join('');
+    }
+
+    function getUtpColorClass(colorName) {
+      const found = UTP_PALETTE_COLORS.find(c => c.name === colorName);
+      return found ? found.class : 'bg-slate-200';
+    }
+
+    function selectUtpColor(colorName) {
+      selectedWireColor = colorName;
+      renderUtpPalette();
+    }
+
+    function fillUtpSlot(slotIdx) {
+      if (!selectedWireColor) {
+        alert("먼저 아래 색상 선을 선택하세요!");
+        return;
+      }
+      appState.utpUserSlots[slotIdx] = selectedWireColor;
+      renderUtpSlots();
+    }
+
+    function resetUtpSlots() {
+      appState.utpUserSlots = Array(8).fill(null);
+      selectedWireColor = null;
+      renderUtpSlots();
+      renderUtpPalette();
+    }
+
+    function toggleUtpStandard() {
+      appState.utpMode = appState.utpMode === 'T568B' ? 'T568A' : 'T568B';
+      document.getElementById('utp-question-text').innerText = appState.utpMode === 'T568B' ? 
+        "Direct Cable (T568B) 배열을 완성하시오. (다이렉트 케이블)" : 
+        "Cross Cable (T568A) 배열을 완성하시오. (크로스 케이블)";
+      resetUtpSlots();
+    }
+
+    function gradeUtpCable() {
+      const target = appState.utpMode === 'T568B' ? UTP_T568B : UTP_T568A;
+      let isCorrect = true;
+
+      for (let i = 0; i < 8; i++) {
+        if (appState.utpUserSlots[i] !== target[i]) {
+          isCorrect = false;
+          break;
+        }
+      }
+
+      if (isCorrect) {
+        alert("🎉 축하합니다! UTP 케이블 배열이 완벽하게 맞춰졌습니다. (+6점 확득)");
+      } else {
+        alert(`❌ 배열 오류! \n정답 순서: ${target.join(' -> ')}`);
+      }
+    }
+
+    /* ==========================================================================
+       8. PRACTICAL SIMULATION: ROUTER CLI
+       ========================================================================== */
+    function handleCliSubmit(e) {
+      e.preventDefault();
+      const inputEl = document.getElementById('cli-input');
+      const cmd = inputEl.value.trim().toLowerCase();
+      inputEl.value = '';
+
+      if (!cmd) return;
+
+      const logContainer = document.getElementById('cli-output-log');
+      const promptText = document.getElementById('cli-prompt').innerText;
+
+      logContainer.innerHTML += `<div><span class="text-slate-400">${promptText}</span> ${cmd}</div>`;
+
+      // CLI State Logic
+      if (cmd === 'enable' || cmd === 'en') {
+        appState.cliCurrentMode = 'enable';
+        document.getElementById('cli-prompt').innerText = 'Router1#';
+      } else if (cmd === 'configure terminal' || cmd === 'conf t') {
+        if (appState.cliCurrentMode === 'enable') {
+          appState.cliCurrentMode = 'config';
+          document.getElementById('cli-prompt').innerText = 'Router1(config)#';
+        } else {
+          logContainer.innerHTML += `<div class="text-red-400">% Command invalid in this mode</div>`;
+        }
+      } else if (cmd === 'interface fastethernet 0/0' || cmd === 'int fa0/0') {
+        if (appState.cliCurrentMode === 'config') {
+          appState.cliCurrentMode = 'config-if';
+          document.getElementById('cli-prompt').innerText = 'Router1(config-if)#';
+        } else {
+          logContainer.innerHTML += `<div class="text-red-400">% Command invalid</div>`;
+        }
+      } else if (cmd.startsWith('ip address') || cmd.startsWith('ip add')) {
+        if (appState.cliCurrentMode === 'config-if') {
+          if (cmd.includes('192.168.10.1') && cmd.includes('255.255.255.0')) {
+            appState.cliConfigured.ip = true;
+            appState.cliConfigured.mask = true;
+            logContainer.innerHTML += `<div class="text-emerald-400">% IP Address set successfully</div>`;
+          } else {
+            logContainer.innerHTML += `<div class="text-amber-400">% Invalid IP or Subnet format</div>`;
+          }
+        }
+      } else if (cmd === 'no shutdown' || cmd === 'no shut') {
+        if (appState.cliCurrentMode === 'config-if') {
+          appState.cliConfigured.noShut = true;
+          logContainer.innerHTML += `<div class="text-emerald-400">% Interface FastEthernet0/0 changed state to up</div>`;
+        }
+      } else if (cmd === 'exit') {
+        if (appState.cliCurrentMode === 'config-if') {
+          appState.cliCurrentMode = 'config';
+          document.getElementById('cli-prompt').innerText = 'Router1(config)#';
+        } else if (appState.cliCurrentMode === 'config') {
+          appState.cliCurrentMode = 'enable';
+          document.getElementById('cli-prompt').innerText = 'Router1#';
+        }
+      } else if (cmd === 'copy run start' || cmd === 'wr') {
+        if (appState.cliCurrentMode === 'enable') {
+          appState.cliConfigured.saved = true;
+          logContainer.innerHTML += `<div class="text-emerald-400">Building configuration... [OK]</div>`;
+        }
+      } else {
+        logContainer.innerHTML += `<div class="text-red-400">% Unknown command</div>`;
+      }
+
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function gradeCliTerminal() {
+      const c = appState.cliConfigured;
+      if (c.ip && c.mask && c.noShut && c.saved) {
+        alert("🎉 정답입니다! 라우터 IP 설정 및 저장(copy run start)까지 완벽하게 완료되었습니다.");
+      } else {
+        alert(`❌ 설정 미완료!\n• IP/Mask: ${c.ip ? 'OK' : '미완료'}\n• 활성화(no shut): ${c.noShut ? 'OK' : '미완료'}\n• 저장(copy run start): ${c.saved ? 'OK' : '미완료'}`);
+      }
+    }
+
+    /* ==========================================================================
+       9. PRACTICAL SIMULATION: NOS GUI
+       ========================================================================== */
+    function gradeNosConfig() {
+      const ip = document.getElementById('nos-ip').value.trim();
+      const subnet = document.getElementById('nos-subnet').value.trim();
+      const gateway = document.getElementById('nos-gateway').value.trim();
+      const dns1 = document.getElementById('nos-dns1').value.trim();
+      const dns2 = document.getElementById('nos-dns2').value.trim();
+
+      if (ip === '192.168.1.100' && subnet === '255.255.255.0' && gateway === '192.168.1.1' && dns1 === '168.126.63.1' && dns2 === '8.8.8.8') {
+        alert("🎉 정답입니다! Windows Server 네트워크 IP 속성이 완벽하게 설정되었습니다.");
+      } else {
+        alert("❌ 입력값이 틀렸습니다. 문제 조건의 IP, 서브넷 마스크, 게이트웨이, DNS 주소를 정확히 입력하세요.");
+      }
+    }
+
+    function openPracticalModule(modId) {
+      document.getElementById('prac-module-utp').classList.add('hidden');
+      document.getElementById('prac-module-cli').classList.add('hidden');
+      document.getElementById('prac-module-nos').classList.add('hidden');
+
+      document.getElementById(`prac-module-${modId}`).classList.remove('hidden');
+
+      ['utp', 'cli', 'nos'].forEach(m => {
+        const btn = document.getElementById(`prac-tab-${m}`);
+        if (btn) {
+          btn.classList.remove('bg-white', 'shadow-sm', 'text-slate-900');
+          btn.classList.add('text-slate-600');
+        }
+      });
+      const activeBtn = document.getElementById(`prac-tab-${modId}`);
+      if (activeBtn) activeBtn.classList.add('bg-white', 'shadow-sm', 'text-slate-900');
+
+      if (modId === 'utp') initUtpLab();
+    }
+
+    /* ==========================================================================
+       10. MOCK EXAM MODE
+       ========================================================================== */
+    function startMockExam() {
+      switchTab('quiz');
+      document.getElementById('quiz-category-select').value = 'ALL';
+      renderQuizList();
+      alert("⏱ 실전 모의고사가 시작되었습니다. 문제를 풀고 제출 결과를 대시보드에서 확인하세요!");
+    }
+
+    /* ==========================================================================
+       11. SUBNET CALCULATOR MODAL
+       ========================================================================== */
+    function openSubnetModal() {
+      document.getElementById('subnet-modal').classList.remove('hidden');
+    }
+    function closeSubnetModal() {
+      document.getElementById('subnet-modal').classList.add('hidden');
+    }
+
+    function calculateSubnet() {
+      const cidr = parseInt(document.getElementById('sub-cidr').value);
+      const hostBits = 32 - cidr;
+      const totalHosts = Math.pow(2, hostBits) - 2;
+
+      // Simple Subnet Mask calculation string representation
+      const masks = {
+        24: "255.255.255.0",
+        25: "255.255.255.128",
+        26: "255.255.255.192",
+        27: "255.255.255.224",
+        28: "255.255.255.240",
+        29: "255.255.255.248",
+        30: "255.255.255.252"
+      };
+
+      document.getElementById('res-mask').innerText = masks[cidr] || "255.255.255.0";
+      document.getElementById('res-net').innerText = "192.168.10.0";
+      document.getElementById('res-broad').innerText = `192.168.10.${Math.pow(2, hostBits) - 1}`;
+      document.getElementById('res-hosts').innerText = totalHosts;
+
+      document.getElementById('sub-result').classList.remove('hidden');
+    }
+
+    /* ==========================================================================
+       INITIALIZATION ON LOAD
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      switchTab('dashboard');
+      initUtpLab();
+    });
+  </script>
+</body>
+</html>
